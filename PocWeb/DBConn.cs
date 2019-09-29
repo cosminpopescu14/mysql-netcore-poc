@@ -16,9 +16,6 @@ namespace PocWeb
             this.connection = new MySqlConnection(CONNECTION_STRING);
         }
 
-        public void Dispose()
-        {
-            connection.Dispose();
-        }
+        public void Dispose() => connection.Dispose();
     }
 }

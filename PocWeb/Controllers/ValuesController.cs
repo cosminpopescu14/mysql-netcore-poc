@@ -6,32 +6,31 @@ using Microsoft.AspNetCore.Mvc;
 
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
+using PocWeb.Cache;
+using PocWeb.DAL;
 
 namespace PocWeb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ValuesController : ControllerBase
+    public class ValuesController : CacheController
     {
+        private readonly IRepository repository;
+        public ValuesController(CacheManager cacheManager, IRepository _repository) : base(cacheManager)
+        {
+            repository = _repository;
+        }
         // GET api/values
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Film>>> Get()
+        public async Task<IEnumerable<Film>> Get()
         {
-            var films = new List<Film>();
-            using (var db = new DBConn())
-            {
-                await db.connection.OpenAsync();
-                MySqlCommand cmd = db.connection.CreateCommand();
-                cmd.CommandText = "select title, description from film limit 200";
+            var response = await this.GetOrSetFromCacheAsync(
+                key: CacheKeys.Films,
+                size: 100,
+                method: () => repository.GetFilmsAsync()
+                );
 
-                var reader = await cmd.ExecuteReaderAsync();
-
-                while (reader.Read())
-                {
-                    films.Add(new Film { Title = await reader.GetFieldValueAsync<string>(0), Description = await reader.GetFieldValueAsync<string>(1) });
-                }
-                return films;
-            }
+            return response;
         }
     }
 }

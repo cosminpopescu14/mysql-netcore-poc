@@ -15,49 +15,23 @@ namespace PocWeb.Controllers
     {
         // GET api/values
         [HttpGet]
-        public /*ActionResult<IEnumerable<string>>*/ string Get()
+        public async Task<ActionResult<IEnumerable<Film>>> Get()
         {
             var films = new List<Film>();
             using (var db = new DBConn())
             {
-                db.connection.Open();
+                await db.connection.OpenAsync();
                 MySqlCommand cmd = db.connection.CreateCommand();
-                cmd.CommandText = "select title, description from film";
+                cmd.CommandText = "select title, description from film limit 200";
 
-                var reader = cmd.ExecuteReader();
+                var reader = await cmd.ExecuteReaderAsync();
 
                 while (reader.Read())
                 {
-                    films.Add(new Film { Title = reader.GetString(0), Description = reader.GetString(1) });
+                    films.Add(new Film { Title = await reader.GetFieldValueAsync<string>(0), Description = await reader.GetFieldValueAsync<string>(1) });
                 }
-
-                return JsonConvert.SerializeObject(films);
+                return films;
             }
         }
-
-        // GET api/values/5
-        /*[HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
-        {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }*/
     }
 }
